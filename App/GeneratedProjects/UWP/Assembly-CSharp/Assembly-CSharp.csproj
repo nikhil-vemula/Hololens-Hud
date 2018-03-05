@@ -5,7 +5,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{84dd95dc-67b5-48e5-b833-c0f32badad29}</ProjectGuid>
+    <ProjectGuid>{6c04e90b-ad30-4ce9-ac93-c0bf270db1cd}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AssemblyCSharpWSA</RootNamespace>
@@ -345,11 +345,8 @@
     <SDKReference Include="WindowsTeam, Version=10.0.16299.0"/>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="$(UnityProjectDir)Assets\Hud.cs">
-      <Link>Hud.cs</Link>
-    </Compile>
-    <Compile Include="$(UnityProjectDir)Assets\Scripts\GazeGestureManager.cs">
-      <Link>Scripts\GazeGestureManager.cs</Link>
+    <Compile Include="$(UnityProjectDir)Assets\Scripts\AirTapPhoto.cs">
+      <Link>Scripts\AirTapPhoto.cs</Link>
     </Compile>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

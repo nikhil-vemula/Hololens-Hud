@@ -10,31 +10,16 @@ using UnityEngine;
 using UnityEngine.Windows.Speech;
 using UnityEngine.XR.WSA.Input;
 using UnityEngine.XR.WSA.WebCam;
+using UnityEngine.UI;
 public class GazeGestureManager : MonoBehaviour
 {
+    public Text Hello;
     private string filePath;
     public static GazeGestureManager Instance { get; private set; }
 
-    // Represents the hologram that is currently being gazed at.
-    public GameObject FocusedObject { get; private set; }
-
     GestureRecognizer recognizer;
 
-    // Use this for initialization
-    void Start() {
-        List<string> keywords = new List<string>();
-        keywords.Add("Take Picture");
-        keywordRecognizer = new KeywordRecognizer(keywords.ToArray());
-        keywordRecognizer.OnPhraseRecognized += KeywordRecognizer_OnPhraseRecognized;
-        keywordRecognizer.Start();
-        Debug.Log("Started");
-
-    }
-    private void KeywordRecognizer_OnPhraseRecognized(PhraseRecognizedEventArgs args) {
-        Debug.Log("Listening..");
-        PhotoCapture.CreateAsync(false, OnPhotoCaptureCreated);
-    }
-    /*void Awake()
+    void Awake()
     {
         Instance = this;
 
@@ -42,53 +27,17 @@ public class GazeGestureManager : MonoBehaviour
         recognizer = new GestureRecognizer();
         recognizer.Tapped += (args) =>
         {
-            Debug.Log("Air Tap Gesture");
-            
-            //ProcessPhotoAsync();
-
-            // Send an OnSelect message to the focused object and its ancestors.
-            if (FocusedObject != null)
-            {
-                FocusedObject.SendMessageUpwards("OnSelect", SendMessageOptions.DontRequireReceiver);
-            }
+            Debug.Log("Air Tapped");
+            //Capturing a photo to camera folder
+            PhotoCapture.CreateAsync(false, OnPhotoCaptureCreated);
+            //Performing facial recognition on that photo
+            ProcessPhotoAsync();
         };
         recognizer.StartCapturingGestures();
-    }*/
-
-    // Update is called once per frame
-    void Update()
-    {
-        /*
-        // Figure out which hologram is focused this frame.
-        GameObject oldFocusObject = FocusedObject;
-
-        // Do a raycast into the world based on the user's
-        // head position and orientation.
-        var headPosition = Camera.main.transform.position;
-        var gazeDirection = Camera.main.transform.forward;
-
-        RaycastHit hitInfo;
-        if (Physics.Raycast(headPosition, gazeDirection, out hitInfo))
-        {
-            // If the raycast hit a hologram, use that as the focused object.
-            FocusedObject = hitInfo.collider.gameObject;
-        }
-        else
-        {
-            // If the raycast did not hit a hologram, clear the focused object.
-            FocusedObject = null;
-        }
-
-        // If the focused object changed this frame,
-        // start detecting fresh gestures again.
-        if (FocusedObject != oldFocusObject)
-        {
-            recognizer.CancelGestures();
-            recognizer.StartCapturingGestures();
-        }*/
     }
+
     PhotoCapture _photoCaptureObject = null;
-    private KeywordRecognizer keywordRecognizer;
+
 
     void OnPhotoCaptureCreated(PhotoCapture captureObject)
     {
@@ -109,17 +58,13 @@ public class GazeGestureManager : MonoBehaviour
     {
         if (result.success)
         {
-
             string filename = string.Format(@"terminator_analysis.jpg");
             filePath = System.IO.Path.Combine(Application.persistentDataPath, filename);
-
-            //Hello.text = filePath;
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
             }
             _photoCaptureObject.TakePhotoAsync(filePath, PhotoCaptureFileOutputFormat.JPG, OnCapturedPhotoToDiskAsync);
-
         }
         else
         {
@@ -141,14 +86,13 @@ public class GazeGestureManager : MonoBehaviour
                 File.Delete(p);
             }
             File.Move(filePath, Path.Combine(cameraRollFolder, "terminator_analysis.jpg"));
+            Debug.Log(File.Exists(Path.Combine(cameraRollFolder, "terminator_analysis.jpg")));
             #endif
         }
         else
         {
             Debug.Log("Failed to save Photo to disk");
         }
-
-        _photoCaptureObject.StopPhotoModeAsync(OnStoppedPhotoMode);
     }
     void OnStoppedPhotoMode(PhotoCapture.PhotoCaptureResult result)
     {
@@ -162,13 +106,10 @@ public class GazeGestureManager : MonoBehaviour
         Windows.Storage.StorageFile file = await storageFolder.GetFileAsync("terminator_analysis.jpg");
         if (file != null)
         {
-            // Application now has read/write access to the picked file
-            //this.textBlock.Text = "Picked photo: " + file.Name;
             Debug.Log("File exists!!");
         }
         else
         {
-            //this.textBlock.Text = "Operation cancelled.";
             Debug.Log("File does not exists!!");
         }
 
@@ -182,7 +123,8 @@ public class GazeGestureManager : MonoBehaviour
         }
 
         HttpClient client = new HttpClient();
-        client.BaseAddress = new Uri("http://127.0.0.1:5000/");
+        //Ip Address of the server running face recognition service
+        client.BaseAddress = new Uri("http://192.168.137.1:5000/");
         MultipartFormDataContent form = new MultipartFormDataContent();
         HttpContent content = new StringContent("file");
         form.Add(content, "file");
@@ -194,9 +136,18 @@ public class GazeGestureManager : MonoBehaviour
             FileName = file.Name
         };
         form.Add(content);
-        var response = await client.PostAsync("facerec", form);
-        //textBlock.Text = response.Content.ReadAsStringAsync().Result;
-        Debug.Log(response.Content.ReadAsStringAsync().Result);
+        String face = null;
+        try
+        {
+            var response = await client.PostAsync("facerec", form);
+            face = response.Content.ReadAsStringAsync().Result;
+            Debug.Log(response.Content.ReadAsStringAsync().Result);
+            Hello.text = response.Content.ReadAsStringAsync().Result;
+        }
+        catch (Exception e) {
+            Debug.Log(e);
+        }
+        //Hello.text = face;
 #endif
     }
 
